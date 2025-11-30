@@ -1,0 +1,86 @@
+{
+  "name": "@jraylan/seamless-agent",
+  "private": true,
+  "displayName": "Seamless Agent",
+  "description": "Seamless Agent - Seamless Agent Extension for VS Code",
+  "version": "0.0.1",
+  "author": "jraylan",
+  "license": "MIT",
+  "main": "./dist/extension.js",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jraylan/seamless-agent.git"
+  },
+  "homepage": "https://github.com/jraylan/seamless-agent#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "developer tools",
+    "vibe-coding",
+    "ai",
+    "copilot"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Seamless Agent",
+      "properties": {
+        "mcp-server.port": {
+          "type": "number",
+          "default": 7071,
+          "description": "Port number for the Seamless Agent"
+        },
+        "mcp-server.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the Seamless Agent when VS Code opens"
+        },
+        "mcp-server.retryOnCancel": {
+          "type": "boolean",
+          "default": true,
+          "description": "If enabled, when the user cancels a confirmation dialog, the tool will retry once more before allowing the agent to end"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "seamless-agent.start",
+        "title": "Seamless Agent: Start Server"
+      },
+      {
+        "command": "seamless-agent.stop",
+        "title": "Seamless Agent: Stop Server"
+      },
+      {
+        "command": "seamless-agent.restart",
+        "title": "Seamless Agent: Restart Server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build": "tsc -p ./",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "@types/express": "^5.0.5",
+    "@types/vscode": "^1.106.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.23.0",
+    "express": "^4.21.2",
+    "zod": "^4.1.13"
+  }
+}
