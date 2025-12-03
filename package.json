@@ -35,6 +35,24 @@
     "copilot"
   ],
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "seamless-agent",
+          "title": "Seamless Agent",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "seamless-agent": [
+        {
+          "id": "seamlessAgentView",
+          "name": "Seamless Agent",
+          "type": "webview"
+        }
+      ]
+    },
     "chatParticipants": [
       {
         "id": "seamless-agent.agent",
@@ -89,11 +107,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.10.1",
     "@types/vscode": "^1.106.1",
     "esbuild": "^0.27.0",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.9.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0"
+  }
 }
