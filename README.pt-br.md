@@ -61,6 +61,22 @@ Nenhum até o momento. Por favor, reporte problemas no [GitHub](https://github.c
 
 ## Notas de Versão
 
+### 0.1.7
+
+#### Corrigido
+
+- **Webview**: Solucionado um problema onde o prompt fallback era aberto quando o Webview não recebeu o foco do usuário (VSCode)
+
+#### Alterado
+
+- **Documentação**: Adicionado instruções para usuários do Antigravity (Antigravity)
+
+## 0.1.6
+
+#### Corrigido
+
+- **Antigravity**: Corrigido suporte ao Antigravity
+
 ### 0.1.5
 
 #### Adicionado

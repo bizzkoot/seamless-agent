@@ -61,6 +61,16 @@ Nenhum até ao momento. Por favor, reporte problemas no [GitHub](https://github.
 
 ## Notas de Versão
 
+### 0.1.7
+
+#### Corrigido
+
+- **Webview**: Resolvido um problema em que o prompt de recurso era aberto quando o Webview não recebia o foco do utilizador (VSCode)
+
+#### Alterado
+
+- **Documentação**: Adicionadas instruções para os utilizadores do Antigravity (Antigravity)
+
 ### 0.1.5
 
 #### Adicionado

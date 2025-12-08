@@ -53,7 +53,7 @@ You can add this in VS Code by going to:
 
 ## Extension Settings
 
-This extension works out of the box with no configuration required.
+This extension works out of the box with no configuration required. You only need to instruct your agent to use it.
 
 ## Known Issues
 
@@ -61,15 +61,31 @@ None at this time. Please report issues on [GitHub](https://github.com/jraylan/s
 
 ## Release Notes
 
-## 0.1.5
+### 0.1.7
 
-### Added
+#### Fixed
 
-- **Antigravity**: Added support to antigravity
+- **Webview**: Fixed issue where the fallback prompt was opened when the Webview didn't received focus (VSCode)
 
-## 0.1.4
+#### Changed
 
-### Fixed
+- **Documentation**: Added instruction to Antigravity users (Antigravity)
+
+### 0.1.6
+
+#### Fixed
+
+- **Antigravity**: Fixed Antigravity integration
+
+### 0.1.5
+
+#### Added
+
+- **Antigravity**: Added support to Antigravity
+
+### 0.1.4
+
+#### Fixed
 
 - **Badge Counter**: Fixed badge not resetting to 0 after all requests are closed (was showing "1" incorrectly)
 - **Notification Behavior**: Notifications now only appear when the Seamless Agent panel is not visible, reducing interruptions when the panel is already open
@@ -78,12 +94,12 @@ None at this time. Please report issues on [GitHub](https://github.com/jraylan/s
 
 - [jraylan:feature/dedicated-view-panel](https://github.com/jraylan/seamless-agent/pull/6)
 
-### Added
+#### Added
 
 - **Multiple Concurrent Requests**: Support for handling multiple requests with list view
 - **Attachments**: File attachments support with VS Code Quick Pick file selector
 
-### Changed
+#### Changed
 
 - **Layout**: A few updates on layout to make the request panel looks like copilot chat
 - **Task List**:
@@ -93,11 +109,11 @@ None at this time. Please report issues on [GitHub](https://github.com/jraylan/s
   Updated panel icon to match VS Code's design language
 - **Badge Counter**: Visual badge showing the number of pending requests
 
-## 0.1.2
+### 0.1.2
 
 - [bicheichane:feature/dedicated-view-panel](https://github.com/jraylan/seamless-agent/pull/4)
 
-### Added
+#### Added
 
 - **Dedicated Panel View**:
   A new "Seamless Agent" panel is registered in the bottom panel area (alongside Terminal/Output), providing a non-intrusive workspace for agent interactions.
@@ -112,13 +128,13 @@ None at this time. Please report issues on [GitHub](https://github.com/jraylan/s
 - **Graceful Fallback**:
   If the webview panel is unavailable (e.g., not yet resolved), the tool automatically falls back to the original VS Code dialog approach.
 
-### Changed
+#### Changed
 
 - Moved user confirmation UI from VS Code popup dialogs to dedicated panel
 - Updated esbuild configuration to compile webview scripts separately
 - Improved localization system with support for EN, PT-BR and PT variants
 
-### Fixed
+#### Fixed
 
 - Added `dist/` to `.gitignore` to avoid committing build artifacts
 
