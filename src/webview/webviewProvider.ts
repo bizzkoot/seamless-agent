@@ -6,10 +6,7 @@ import { strings, localize } from '../localization';
 
 import {
     ToolCallInteraction,
-    createInteraction,
-    trimInteractions,
-    serializeInteractions,
-    deserializeInteractions
+    createInteraction
 } from './sessionHistory';
 
 import { getExcludePattern } from '../config/ignorePaths';
@@ -51,6 +48,7 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
     constructor(private readonly _context: vscode.ExtensionContext) {
         // Use the singleton instance that was initialized in extension.ts
         this._chatHistoryStorage = getChatHistoryStorage();
+        //this.loadSessionsFromDisk()
     }
 
     /**
@@ -65,69 +63,6 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
     }
 
     /**
-     * Load interaction history from disk (using VS Code global storage)
-     */
-    public loadSessionsFromDisk(): void {
-        try {
-            const storagePath = this._context.globalStorageUri.fsPath;
-            const historyPath = path.join(storagePath, 'history.json');
-
-            if (fs.existsSync(historyPath)) {
-                const data = fs.readFileSync(historyPath, 'utf8');
-                this._recentInteractions = deserializeInteractions(data);
-
-                console.log(`Loaded ${this._recentInteractions.length} interactions from extension storage`);
-            }
-        }
-
-        catch (error) {
-            console.error('Failed to load interactions from extension storage:', error);
-        }
-    }
-
-    /**
-     * Save interaction history to disk (using VS Code global storage)
-     */
-    public saveSessionsToDisk(): void {
-        try {
-            const storagePath = this._context.globalStorageUri.fsPath;
-            const historyPath = path.join(storagePath, 'history.json');
-
-            // Ensure directory exists
-            if (!fs.existsSync(storagePath)) {
-                fs.mkdirSync(storagePath, {
-                    recursive: true
-                }
-
-                );
-            }
-
-            const data = serializeInteractions(this._recentInteractions);
-            fs.writeFileSync(historyPath, data, 'utf8');
-
-            console.log(`Saved ${this._recentInteractions.length} interactions to extension storage`);
-        }
-
-        catch (error) {
-            console.error('Failed to save interactions to extension storage:', error);
-        }
-    }
-
-    /**
-     * Add an interaction to the history
-     */
-    private _addInteraction(interaction: ToolCallInteraction): void {
-        // Add to recent interactions at the beginning (newest first)
-        this._recentInteractions.unshift(interaction);
-
-        // Trim to max interactions
-        this._recentInteractions = trimInteractions(this._recentInteractions);
-
-        // Save to disk
-        this.saveSessionsToDisk();
-    }
-
-    /**
      * Get all recent interactions
      */
     public getRecentSessions(): ToolCallInteraction[] {
@@ -138,10 +73,6 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
      * Clear all interaction history (both legacy and storage)
      */
     public clearHistory(): void {
-        // Clear legacy interactions
-        this._recentInteractions = [];
-        this.saveSessionsToDisk();
-
         // Clear all chats and interactions from storage
         this._chatHistoryStorage.clearAll();
 
@@ -1037,14 +968,13 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
 
         if (pending) {
             // Create interaction record and add to history (keeps full attachment info)
-            const interaction = createInteraction(requestId,
+            createInteraction(requestId,
                 pending.item.question,
                 pending.item.title,
                 result.response,
                 result.attachments,
                 result.responded ? 'completed' : 'cancelled'
             );
-            this._addInteraction(interaction);
 
             // Persist ask_user interaction into ChatHistoryStorage so it shows in the History tab
             // (This is separate from the legacy "recent interactions" list.)
@@ -1065,7 +995,6 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
             // Strip internal fields from attachments before returning to MCP caller
             // LLM only needs name and uri to access the content
             const cleanResult: UserResponseResult = {
-
                 responded: result.responded,
                 response: result.response,
                 attachments: result.attachments.map(att => ({
@@ -1074,9 +1003,7 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
                 }
 
                 )) as AttachmentInfo[]
-            }
-
-                ;
+            };
 
             pending.resolve(cleanResult);
             this._pendingRequests.delete(requestId);

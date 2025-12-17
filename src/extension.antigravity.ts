@@ -16,7 +16,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Create provider
     const provider = new AgentInteractionProvider(context);
-    provider.loadSessionsFromDisk(); // Restore interaction history from disk
 
     // Register webview provider
     context.subscriptions.push(

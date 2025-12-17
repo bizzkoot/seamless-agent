@@ -22,8 +22,6 @@ export async function askUser(
     // Generate request ID to track this specific request
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-    // Get storage instance
-    const storage = getChatHistoryStorage();
 
     // Register cancellation handler - if agent stops, cancel the request
     const cancellationDisposable = token.onCancellationRequested(() => {
@@ -33,15 +31,6 @@ export async function askUser(
     try {
         // Execute Logic - Try webview first, fall back to VS Code dialogs
         const result = await askViaWebview(provider, question, title, requestId, token);
-
-        // Save the interaction to storage (no chatId needed - each interaction is individual)
-        storage.saveAskUserInteraction({
-            question,
-            title,
-            agentName,
-            response: result.responded ? result.response : strings.cancelled,
-            attachments: result.attachments.map(att => att.uri)
-        });
 
         return {
             responded: result.responded,
