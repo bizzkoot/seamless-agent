@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/jraylan/seamless-agent/compare/seamless-agent-v0.1.12...seamless-agent-v0.1.13) (2025-12-17)
+
+
+### Features
+
+* Attached files preview ([5c18d3b](https://github.com/jraylan/seamless-agent/commit/5c18d3b6165485c6ffbf66b01deec17f2c90fa80)), closes [#29](https://github.com/jraylan/seamless-agent/issues/29)
+
 ## [0.1.12](https://github.com/jraylan/seamless-agent/compare/seamless-agent-v0.1.11...seamless-agent-v0.1.12) (2025-12-17)
 
 
