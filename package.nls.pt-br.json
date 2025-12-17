@@ -27,6 +27,7 @@
   "attachment.imageTooLarge": "Imagem muito grande ({0} MB). O tamanho máximo permitido é {1}MB.",
   "attachment.unsupportedImageType": "Tipo de imagem não suportado: {0}",
   "attachment.saveImageFailed": "Falha ao salvar a imagem colada: {0}",
+  "attachment.pastedImage": "Imagem Colada",
   "console.pendingRequests": "Solicitações Pendentes",
   "badge.inputRequired": "Entrada Necessária",
   "time.justNow": "agora mesmo",

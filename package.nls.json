@@ -28,6 +28,7 @@
   "attachment.imageTooLarge": "Image too large ({0} MB). Maximum allowed size is {1}MB.",
   "attachment.unsupportedImageType": "Unsupported image type: {0}",
   "attachment.saveImageFailed": "Failed to save pasted image: {0}",
+  "attachment.pastedImage": "Pasted Image",
   "console.pendingRequests": "Pending Requests",
   "badge.inputRequired": "Input Required",
   "time.justNow": "just now",

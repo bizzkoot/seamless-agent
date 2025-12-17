@@ -680,13 +680,10 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
                         folderResults.push({
                             name: folderName,
                             path: dirPath,
-                            uri: vscode.Uri.joinPath(workspaceFolder,
-                                dirPath).toString(),
+                            uri: vscode.Uri.joinPath(workspaceFolder, dirPath).toString(),
                             icon: 'folder',
                             isFolder: true
-                        }
-
-                        );
+                        });
                     }
                 }
             }
@@ -702,9 +699,7 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
                     uri: uri.toString(),
                     icon: this._getFileIcon(fileName),
                     isFolder: false
-                }
-
-                    ;
+                };
             }
 
             ) // Case-insensitive filtering on both filename and path
@@ -924,10 +919,9 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
                 id: `img_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
                 name: fileName,
                 uri: vscode.Uri.file(filePath).toString(),
-                isTemporary: true // Mark for cleanup after request resolution
-            }
-
-                ;
+                isTemporary: true,
+                thumbnail: dataUrl,
+            };
 
             // Add to pending request attachments
             pending.item.attachments.push(attachment);
@@ -1104,25 +1098,19 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
                 // This ensures the badge properly clears in the UI
                 this._view.badge = {
                     value: 0, tooltip: ''
-                }
-
-                    ;
+                };
 
                 setTimeout(() => {
                     if (this._view && this._pendingRequests.size === 0) {
                         this._view.badge = undefined;
                     }
-                }
-
-                    , 100);
+                }, 100);
             }
 
             else {
                 this._view.badge = {
                     value: count, tooltip: strings.inputRequired
-                }
-
-                    ;
+                };
             }
         }
     }
@@ -1263,6 +1251,7 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
             '{{attachments}}': strings.attachments,
             '{{noAttachments}}': strings.noAttachments,
             '{{addAttachment}}': strings.addAttachment,
+            '{{pastedImage}}': strings.pastedImage,
             '{{submit}}': strings.submit,
             '{{cancel}}': strings.cancel,
             '{{remove}}': strings.remove,
@@ -1298,7 +1287,7 @@ export class AgentInteractionProvider implements vscode.WebviewViewProvider {
             // History filter tooltips
             '{{historyFilterAll}}': strings.historyFilterAll,
             '{{historyFilterAskUser}}': strings.historyFilterAskUser,
-            '{{historyFilterPlanReview}}': strings.historyFilterPlanReview
+            '{{historyFilterPlanReview}}': strings.historyFilterPlanReview,
         };
 
         for (const [placeholder, value] of Object.entries(replacements)) {

@@ -114,6 +114,7 @@ declare global {
             pendingItems: string;
             chatHistory: string;
             clearHistory: string;
+            pastedImage: string;
         }
 
         ;
@@ -437,6 +438,10 @@ import type {
         }
     }
 
+    function tn(text: string): Text {
+        return document.createTextNode(text);
+    }
+
     function el<K extends keyof HTMLElementTagNameMap>(
         tag: K,
         options?: {
@@ -621,10 +626,9 @@ import type {
 
         // Update history list placeholder if empty
         if (historyList && historyList.children.length === 0) {
-            historyList.innerHTML = `<p class="placeholder">${window.__STRINGS__?.noChats || 'No history yet'
-                }
-
-                </p>`;
+            const p = el('p', { className: 'placeholder' });
+            p.innerText = window.__STRINGS__?.noChats || 'No history yet';
+            historyList.appendChild(p);
         }
 
         // Render recent interactions (legacy)
@@ -965,42 +969,40 @@ import type {
                     : (interaction.response || noResponseLabel);
 
                 const attachmentsHtml = (interaction.attachments && interaction.attachments.length > 0)
-                    ? `
-                        <div class="detail-section">
-                            <div class="detail-label">
-                                <span class="codicon codicon-file"></span>
-                                ${attachmentsLabel}
-                            </div>
-                            <div class="detail-attachments">
-                                ${interaction.attachments.map(att => {
-                        const name = att.split('/').pop() || att;
-                        return `<span class="attachment-chip">${escapeHtml(name)}</span>`;
-                    }).join('')}
-                            </div>
-                        </div>
-                    `
-                    : '';
+                    ? (() => (
+                        el('div', { className: 'detail-section' },
+                            el('div', { className: 'detail-label' },
+                                el('span', { className: 'codicon codicon-file' }),
+                                attachmentsLabel
+                            ),
+                            el('div', { className: 'detail-attachments' },
+                                ...interaction.attachments.map(att => {
+                                    const name = att.split('/').pop() || att;
+                                    return el('span', { className: 'attachment-chip', text: name });
+                                })
+                            ))
+                    ))() : tn('');
 
-                detailContent.innerHTML = `
-                    <div class="detail-section">
-                        <div class="detail-label">
-                            <span class="codicon codicon-question"></span>
-                            ${questionLabel}
-                        </div>
-                        <div class="detail-content markdown-content">${renderMarkdown(interaction.question || '')}</div>
-                    </div>
-                    <div class="detail-section">
-                        <div class="detail-label">
-                            <span class="codicon codicon-reply"></span>
-                            ${responseLabel}
-                        </div>
-                        <div class="detail-content ${isCancelled ? 'cancelled-response' : ''}">${escapeHtml(displayResponse)}</div>
-                    </div>
-                    ${attachmentsHtml}
-                    <div class="detail-meta">
-                        <span>${formatTime(interaction.timestamp)}</span>
-                    </div>
-                `;
+                detailContent.replaceChildren(
+                    el('div', { className: 'detail-section' },
+                        el('div', { className: 'detail-label' },
+                            el('span', { className: 'codicon codicon-question' }),
+                            questionLabel
+                        ),
+                        el('div', { className: 'detail-content markdown-content', html: renderMarkdown(interaction.question || '') })
+                    ),
+                    el('div', { className: 'detail-section' },
+                        el('div', { className: 'detail-label' },
+                            el('span', { className: 'codicon codicon-reply' }),
+                            responseLabel
+                        ),
+                        el('div', { className: `detail-content ${isCancelled ? 'cancelled-response' : ''}`, html: escapeHtml(displayResponse) }),
+                    ),
+                    attachmentsHtml,
+                    el('div', { className: 'detail-meta' },
+                        el('span', { text: formatTime(interaction.timestamp) })
+                    )
+                );
             }
 
             else {
@@ -1050,7 +1052,7 @@ import type {
         else {
             chipsContainer.classList.remove('hidden');
 
-            chipsContainer.innerHTML = currentAttachments.map(att => {
+            chipsContainer.replaceChildren(...currentAttachments.map(att => {
                 const isImage = att.isImage || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(att.name);
                 const isFolder = att.isFolder;
 
@@ -1067,7 +1069,7 @@ import type {
                 }
 
                 else if (isImage) {
-                    displayName = att.id.startsWith('img_') ? 'Pasted Image' : att.name;
+                    displayName = att.id.startsWith('img_') ? window.__STRINGS__.pastedImage : att.name;
                     iconClass = 'file-media';
                     chipClass = 'chip chip-image';
                 }
@@ -1078,13 +1080,24 @@ import type {
                     chipClass = 'chip';
                 }
 
-                return ` <div class="${chipClass}"data-id="${att.id}"title="${escapeHtml(att.folderPath || att.uri || att.name)}"> <span class="chip-icon"><span class="codicon codicon-${iconClass}"></span></span> <span class="chip-text">${escapeHtml(displayName)
-                    }
-
-                    </span> <button class="chip-remove"data-remove="${att.id}"title="${window.__STRINGS__?.remove || 'Remove'}"aria-label="Remove ${escapeHtml(att.name)}"> <span class="codicon codicon-close"></span> </button> </div> `;
+                return el(
+                    'div', { className: chipClass, title: att.folderPath || att.uri || att.name, attrs: { 'data-id': att.id } },
+                    el('span', { className: 'chip-icon' },
+                        el('span', { className: `codicon codicon-${iconClass}` })
+                    ),
+                    el('span', { className: 'chip-text', text: displayName }),
+                    el(
+                        'button',
+                        {
+                            className: 'chip-remove',
+                            title: window.__STRINGS__?.remove || 'Remove',
+                            attrs: { type: 'button', 'data-remove': att.id }
+                        },
+                        el('span', { className: 'codicon codicon-close' })
+                    )
+                );
             }
-
-            ).join('');
+            ));
 
             // Bind remove buttons
             chipsContainer.querySelectorAll('.chip-remove').forEach(btn => {
@@ -1095,12 +1108,8 @@ import type {
                     if (attId) {
                         removeAttachment(attId);
                     }
-                }
-
-                );
-            }
-
-            );
+                });
+            });
         }
     }
 
@@ -1346,19 +1355,21 @@ import type {
     function renderAutocompleteList(): void {
         if (!autocompleteList) return;
 
-        autocompleteList.innerHTML = autocompleteResults.map((file, index) => ` <div class="autocomplete-item${index === selectedAutocompleteIndex ? ' selected' : ''}"
+        autocompleteList.replaceChildren(...autocompleteResults.map((file, index) => (
+            el(
+                'div', { className: `autocomplete-item${index === selectedAutocompleteIndex ? ' selected' : ''}`, attrs: { 'data-index': String(index), tabindex: '-1' } },
+                el('span', { className: 'autocomplete-item-icon' },
+                    el('span', { className: `codicon codicon-${file.icon}` })
+                ),
+                el('div', { className: 'autocomplete-item-content' },
+                    el('span', { className: 'autocomplete-item-name', text: file.name }),
+                    el('span', { className: 'autocomplete-item-path', text: file.path })
+                )
+            )
+        )));
 
-            data-index="${index}"tabindex="-1"> <span class="autocomplete-item-icon"> <span class="codicon codicon-${file.icon}"></span> </span> <div class="autocomplete-item-content"> <span class="autocomplete-item-name">${escapeHtml(file.name)
-            }
-
-            </span> <span class="autocomplete-item-path">${escapeHtml(file.path)
-            }
-
-            </span> </div> </div> `).join('');
-
-        // Bind click events
         autocompleteList.querySelectorAll('.autocomplete-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+            item.addEventListener('click', () => {
                 const index = parseInt((item as HTMLElement).getAttribute('data-index') || '0', 10);
                 selectAutocompleteItem(index);
             }
@@ -1465,28 +1476,23 @@ import type {
     function addFileAttachment(file: FileSearchResult, isTextReference: boolean = false): void {
         const isFolder = file.isFolder === true;
 
+        const isImage = !isFolder && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name);
+
+        const thumbnail = isImage ? file.uri : undefined;
+
         const attachment: AttachmentInfo = {
-            id: `${isFolder ? 'folder' : 'file'
-                }
+            id: `${isFolder ? 'folder' : 'file'}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
 
-            _${Date.now()
-                }
-
-            _${Math.random().toString(36).substring(2, 8)
-                }
-
-            `,
             // Note: substring(2, 8) extracts 6 chars starting at index 2, equivalent to deprecated substr(2, 6)
             name: file.name,
             uri: file.uri,
-            isImage: !isFolder && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name),
+            isImage,
             isTextReference: isTextReference,
             isFolder: isFolder,
             folderPath: isFolder ? file.path : undefined,
-            depth: isFolder ? -1 : undefined // Default to recursive for autocomplete-added folders
-        }
-
-            ;
+            depth: isFolder ? -1 : undefined, // Default to recursive for autocomplete-added folders
+            thumbnail,
+        };
 
         currentAttachments.push(attachment);
         updateChipsDisplay();
@@ -1753,14 +1759,10 @@ import type {
                     type: 'saveImage',
                     requestId: currentRequestId,
                     data: dataUrl,
-                    mimeType: file.type
-                }
-
-                );
+                    mimeType: file.type,
+                });
             }
-        }
-
-            ;
+        };
         reader.readAsDataURL(file);
     }
 
@@ -1850,9 +1852,39 @@ import type {
             event.preventDefault();
             handleSubmit();
         }
-    }
+    });
 
-    );
+
+    const preview = async () => document.querySelector('.image-hover-preview') as HTMLElement || null;
+
+    document.addEventListener('mouseover', async (event: MouseEvent) => {
+        const target = (event.target as HTMLElement).closest('.chip-image') as HTMLElement | null;
+        const prev = await preview();
+        if (target) {
+            const attach = currentAttachments.find(a => a.id === target.getAttribute('data-id'));
+
+            console.log({
+                attach,
+                currentAttachments,
+                target,
+            })
+            if (!attach?.thumbnail) return;
+
+            const previewImg = prev?.querySelector('img') as HTMLImageElement || null;
+
+            previewImg.setAttribute('src', attach.thumbnail);
+            previewImg.setAttribute('alt', attach.name);
+
+            const rect = target.getBoundingClientRect();
+            const previewRect = prev.getBoundingClientRect();
+            const top = rect.top - previewRect.height - 8
+            prev.style.top = `${top}px`;
+            prev?.classList.remove('hidden');
+        } else {
+            prev?.classList.add('hidden');
+        }
+    });
+
 
     // Listen for messages from the Extension Host
     window.addEventListener('message', (event: MessageEvent) => {
@@ -1900,11 +1932,10 @@ import type {
 
                 currentAttachments = (message.attachments || []).map((att: AttachmentInfo) => {
                     const existing = existingFlags.get(att.id);
-
                     return {
                         ...att,
                         isImage: att.isImage || existing?.isImage || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(att.name),
-                        isTextReference: att.isTextReference ?? existing?.isTextReference ?? false
+                        isTextReference: att.isTextReference ?? existing?.isTextReference ?? false,
                     };
                 }
 
@@ -1917,7 +1948,6 @@ import type {
             case 'fileSearchResults': if (autocompleteQuery !== undefined) {
                 showAutocomplete(message.files || []);
             }
-
                 break;
 
             case 'imageSaved': if (message.requestId === currentRequestId && message.attachment) {
@@ -1927,10 +1957,10 @@ import type {
                 if (!exists) {
                     currentAttachments.push({
                         ...message.attachment,
-                        isImage: true
-                    }
-
-                    );
+                        isImage: async () => {
+                            return message.attachment.uri!;
+                        },
+                    });
                     updateChipsDisplay();
                 }
             }
@@ -1946,9 +1976,7 @@ import type {
                 hideAutocomplete();
                 break;
         }
-    }
-
-    );
+    });
 
     // Initialize history filters
     initHistoryFilters();
@@ -1968,6 +1996,4 @@ declare function acquireVsCodeApi(): {
     postMessage(message: unknown): void;
     getState(): unknown;
     setState(state: unknown): void;
-}
-
-    ;
+};

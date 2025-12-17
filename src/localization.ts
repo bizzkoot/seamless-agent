@@ -143,4 +143,5 @@ export const strings = {
     get attachmentFolderDepth1() { return localize('attachment.folderDepth.depth1'); },
     get attachmentFolderDepth2() { return localize('attachment.folderDepth.depth2'); },
     get attachmentFolderDepthRecursive() { return localize('attachment.folderDepth.recursive'); },
+    get pastedImage() { return localize('attachment.pastedImage'); },
 };

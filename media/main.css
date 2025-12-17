@@ -770,8 +770,29 @@ button:disabled {
     font-size: 10px;
 }
 
-.chip-image {
-    background-color: var(--vscode-editorInfo-background);
+
+.image-hover-preview {
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 0.8s;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.image-hover-preview img {
+    max-width: calc(100vw - 16px);
+    margin-left: auto;
+    max-height: 200px;
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+    display: block;
+}
+
+.image-hover-preview.hidden {
+    display: block !important;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ================================

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; font-src {{cspSource}}; script-src 'nonce-{{nonce}}';"
+      content="default-src 'none'; img-src vscode-webview: data:; style-src {{cspSource}} 'unsafe-inline'; font-src {{cspSource}}; script-src 'nonce-{{nonce}}';"
     />
     <link href="{{styleUri}}" rel="stylesheet" />
     <link href="{{highlightStyleUri}}" rel="stylesheet" />
@@ -218,6 +218,10 @@
       </div>
     </div>
 
+    <div class="image-hover-preview hidden">
+      <img src="" alt="" />
+    </div>
+
     <!-- Store strings for JS -->
     <script nonce="{{nonce}}">
       window.__STRINGS__ = {
@@ -251,6 +255,7 @@
         pendingItems: "{{pendingItems}}",
         chatHistory: "{{chatHistory}}",
         clearHistory: "{{clearHistory}}",
+        pastedImage: "{{pastedImage}}",
       };
     </script>
     <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
