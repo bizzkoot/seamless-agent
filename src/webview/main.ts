@@ -1863,11 +1863,6 @@ import type {
         if (target) {
             const attach = currentAttachments.find(a => a.id === target.getAttribute('data-id'));
 
-            console.log({
-                attach,
-                currentAttachments,
-                target,
-            })
             if (!attach?.thumbnail) return;
 
             const previewImg = prev?.querySelector('img') as HTMLImageElement || null;
@@ -1957,9 +1952,7 @@ import type {
                 if (!exists) {
                     currentAttachments.push({
                         ...message.attachment,
-                        isImage: async () => {
-                            return message.attachment.uri!;
-                        },
+                        isImage: true,
                     });
                     updateChipsDisplay();
                 }
