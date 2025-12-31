@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17](https://github.com/jraylan/seamless-agent/compare/seamless-agent-v0.1.16...seamless-agent-v0.1.17) (2025-12-31)
+
+
+### Bug Fixes
+
+* Incorrect scrolling in #askUser tool input on Windows IME ([f33a9a7](https://github.com/jraylan/seamless-agent/commit/f33a9a7a631b7653e3b753fcb07b36d612873d48))
+
 ## [0.1.16](https://github.com/jraylan/seamless-agent/compare/seamless-agent-v0.1.15...seamless-agent-v0.1.16) (2025-12-31)
 
 
