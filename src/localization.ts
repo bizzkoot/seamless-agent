@@ -55,6 +55,7 @@ export const strings = {
     get submit() { return localize('button.submit'); },
     get cancel() { return localize('button.cancel'); },
     get back() { return localize('button.back'); },
+    get close() { return localize('button.close'); },
     get addAttachment() { return localize('button.addAttachment'); },
     get remove() { return localize('button.remove'); },
     get inputPlaceholder() { return localize('input.placeholder'); },

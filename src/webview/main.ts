@@ -80,7 +80,27 @@ declare global {
         renderMarkdown: typeof renderMarkdown;
 
         __STRINGS__: {
+            cspSource: string;
+            nonce: string;
+            styleUri: string;
+            highlightStyleUri: string;
+            codiconsUri: string;
+            scriptUri: string;
+            consoleTitle: string;
+            back: string;
+            noPendingRequests: string;
+            noPendingItems: string;
+            pendingItems: string;
+            pendingRequests: string;
+            yourResponse: string;
+            inputPlaceholder: string;
+            attachments: string;
             noAttachments: string;
+            addAttachment: string;
+            pastedImage: string;
+            submit: string;
+            close: string;
+            cancel: string;
             remove: string;
             justNow: string;
             minutesAgo: string;
@@ -89,12 +109,20 @@ declare global {
             selectFile: string;
             noFilesFound: string;
             dropImageHere: string;
-            noPendingRequests: string;
-            noPendingReviews: string;
-            noChats: string;
+            // Session histors
+            recentSessions: string;
             noRecentSessions: string;
+            clearHistory: string;
+            sessionInput: string;
+            sessionOutput: string;
             input: string;
             output: string;
+            addFolder: string;
+            // Chat histors
+            pendingReviews: string;
+            noPendingReviews: string;
+            chatHistory: string;
+            noChats: string;
             openInPanel: string;
             deleteChat: string;
             approved: string;
@@ -105,15 +133,11 @@ declare global {
             question: string;
             response: string;
             noResponse: string;
-            attachments: string;
-            // Home toolbar labels
-            pendingItems: string;
-            chatHistory: string;
-            clearHistory: string;
-            pastedImage: string;
-        }
-
-        ;
+            // History filtes
+            historyFilterAll: string;
+            historyFilterAskUser: string;
+            historyFilterPlanReview: string;
+        };
     }
 }
 
@@ -546,9 +570,9 @@ import { truncate } from './utils';
                 const timeEl = el('span', { text: formatTime(req.createdAt) });
                 const deleteBtn = el('button', {
                     className: 'pending-item-delete',
-                    title: 'Remove',
+                    title: window.__STRINGS__.close || 'Close',
                     attrs: { type: 'button', 'data-id': req.id }
-                }, codicon('trash'));
+                }, codicon('circle-slash'));
                 appendChildren(metaEl, deleteBtn, ' ', timeEl);
 
                 appendChildren(item, titleEl, previewEl, metaEl);
@@ -624,9 +648,7 @@ import { truncate } from './utils';
         const tabNames: Record<string, string> = {
             pending: window.__STRINGS__?.pendingItems || 'Pending Items',
             history: window.__STRINGS__?.chatHistory || 'Chat History',
-        }
-
-            ;
+        };
 
         announceToScreenReader(`${tabNames[tab]}tab selected`);
     }
@@ -837,9 +859,9 @@ import { truncate } from './utils';
             const time = el('span', { text: formatTime(review.timestamp) });
             const deleteBtn = el('button', {
                 className: 'pending-item-delete',
-                title: 'Remove',
+                title: window.__STRINGS__.close || 'Close',
                 attrs: { type: 'button', 'data-id': review.id }
-            }, codicon('trash'));
+            }, codicon('circle-slash'));
             appendChildren(meta, statusBadge, ' ', deleteBtn, ' ', time);
 
             appendChildren(item, title, preview, meta);
@@ -1340,9 +1362,7 @@ import { truncate } from './utils';
             'gz': 'file-zip',
             'rar': 'file-zip',
             '7z': 'file-zip',
-        }
-
-            ;
+        };
         return iconMap[ext] || 'file';
     }
 

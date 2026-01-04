@@ -88,12 +88,10 @@ export type ToWebviewMessage = | {
     title: string;
     requestId: string
 }
-
     | {
         type: 'showList';
         requests: RequestItem[]
     }
-
     | {
         type: 'showHome';
         pendingRequests: RequestItem[];
@@ -101,39 +99,31 @@ export type ToWebviewMessage = | {
         historyInteractions: StoredInteraction[];
         recentInteractions: ToolCallInteraction[]
     }
-
     | {
         type: 'updateAttachments';
         requestId: string;
         attachments: AttachmentInfo[]
     }
-
     | {
         type: 'fileSearchResults';
         files: FileSearchResult[]
     }
-
     | {
         type: 'imageSaved';
         requestId: string;
         attachment: AttachmentInfo
     }
-
     | {
         type: 'showInteractionDetail';
         interaction: StoredInteraction
     }
-
     | {
         type: 'switchTab';
         tab: 'pending' | 'history'
     }
-
     | {
         type: 'clear'
-    }
-
-    ;
+    };
 
 export type FromWebviewMessage = | {
     type: 'submit';
@@ -141,92 +131,74 @@ export type FromWebviewMessage = | {
     requestId: string;
     attachments: AttachmentInfo[]
 }
-
     | {
         type: 'cancel';
         requestId: string
     }
-
     | {
         type: 'selectRequest';
         requestId: string
     }
-
     | {
         type: 'backToList'
     }
-
     | {
         type: 'backToHome'
     }
-
     | {
         type: 'clearHistory'
     }
-
     | {
         type: 'clearChatHistory'
     }
-
     | {
         type: 'addAttachment';
         requestId: string
     }
-
     | {
         type: 'removeAttachment';
         requestId: string;
         attachmentId: string
     }
-
     | {
         type: 'searchFiles';
         query: string
     }
-
     | {
         type: 'saveImage';
         requestId: string;
         data: string;
         mimeType: string
     }
-
     | {
         type: 'addFileReference';
         requestId: string;
         file: FileSearchResult
     }
-
     | {
         type: 'addFolderAttachment';
         requestId: string
     }
-
     | {
         type: 'selectPlanReview';
         interactionId: string
     }
-
     | {
         type: 'selectInteraction';
         interactionId: string
     }
-
     | {
         type: 'openPlanReviewPanel';
         interactionId: string
     }
-
     | {
         type: 'deleteInteraction';
         interactionId: string
     }
-
     | {
         type: 'cancelPendingRequest';
         requestId: string
-    }
-    ;
+    };
 
 
 // Plan review types (shared between extension and webview)
