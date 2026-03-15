@@ -171,23 +171,24 @@ describe('imageCleanup', () => {
     it('handles prefix matching respecting filesystem case sensitivity', async () => {
         const interactionId = 'whiteboard_1234567890_abc';
 
-        // Create files with different cases
+        // Create files with different cases:
+        // - Same exact interactionId prefix: both get deleted (suffix case does not matter)
+        // - Uppercase interactionId: does NOT match the lowercase prefix on case-sensitive filesystems
         await fs.writeFile(path.join(tempImageDir, `${interactionId}_canvas.png`), 'match');
         await fs.writeFile(path.join(tempImageDir, `${interactionId.toUpperCase()}_canvas.png`), 'nomatch');
-        await fs.writeFile(path.join(tempImageDir, `${interactionId}_Canvas.png`), 'nomatch2');
+        await fs.writeFile(path.join(tempImageDir, `${interactionId}_Canvas.png`), 'match2');
 
         await cleanupWhiteboardTempImages(interactionId, storageRootPath);
 
         const remaining = await fs.readdir(tempImageDir);
         
-        // On case-sensitive filesystems: 2 files remain (uppercase ID and Canvas variants)
-        // On case-insensitive filesystems (macOS): 0 files remain (all match the prefix)
+        // On case-sensitive filesystems: 1 file remains (uppercase ID doesn't match)
+        // On case-insensitive filesystems (macOS/Windows): 0 files remain (all match the prefix)
         const isCaseSensitiveFilesystem = process.platform !== 'darwin' && process.platform !== 'win32';
         
         if (isCaseSensitiveFilesystem) {
-            // Expecting 2 files on case-sensitive filesystem
-            assert.strictEqual(remaining.length, 2);
-            assert.ok(remaining.some(f => f.includes('_Canvas.png')));
+            // Only the uppercase interactionId file should remain; both lowercase-prefix files are deleted
+            assert.strictEqual(remaining.length, 1);
             assert.ok(remaining.some(f => f.includes('WHITEBOARD')));
         } else {
             // On case-insensitive filesystems, prefix matching treats all variations as matching
