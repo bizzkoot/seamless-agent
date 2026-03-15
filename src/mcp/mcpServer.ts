@@ -115,12 +115,6 @@ export class McpServerManager {
                     if (signal) {
                         signal.onabort = () => tokenSource.cancel();
                     }
-                    try {
-                        // Validate args
-                        if (!args || typeof args !== 'object' || !('question' in args)) {
-                            throw new Error('Invalid arguments: question is required');
-                        }
-
                     // Validate args
                     if (!args || typeof args !== 'object' || !('question' in args)) {
                         throw new Error('Invalid arguments: question is required');
@@ -144,11 +138,11 @@ export class McpServerManager {
                         return {
                             content: [
                                 {
-                                    type: "text",
+                                    type: "text" as const,
                                     text: JSON.stringify(result)
                                 },
                                 ...(appendText ? [{
-                                    type: "text",
+                                    type: "text" as const,
                                     text: appendText
                                 }] : [])
                             ]
@@ -159,7 +153,6 @@ export class McpServerManager {
                     } finally {
                         tokenSource.dispose();
                     }
-
                 }
             );
 
