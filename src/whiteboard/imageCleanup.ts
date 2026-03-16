@@ -86,9 +86,14 @@ export async function cleanupWhiteboardTempImages(
         let deletedCount = 0;
         let errorCount = 0;
 
-        // Delete files matching the interactionId prefix
+        // Delete files matching the interactionId prefix used by the whiteboard export logic.
+        // We only want to delete files that start with `${interactionId}_canvas` to avoid accidentally
+        // removing unrelated files that happen to share the same interactionId prefix.
+        const escapedInteractionId = interactionId.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        const matchPrefix = new RegExp(`^${escapedInteractionId}_canvas`);
+
         for (const file of files) {
-            if (!file.startsWith(prefix)) {
+            if (!matchPrefix.test(file)) {
                 continue;
             }
 

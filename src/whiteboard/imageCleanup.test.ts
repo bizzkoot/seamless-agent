@@ -234,14 +234,14 @@ describe('imageCleanup', () => {
     it('continues cleanup even if individual file deletion fails', async () => {
         const interactionId = 'whiteboard_1234567890_abc';
 
-        // Create multiple files
-        await fs.writeFile(path.join(tempImageDir, `${interactionId}_file1.png`), 'data1');
-        await fs.writeFile(path.join(tempImageDir, `${interactionId}_file2.png`), 'data2');
-        await fs.writeFile(path.join(tempImageDir, `${interactionId}_file3.png`), 'data3');
+        // Create multiple files that match the whiteboard export naming pattern
+        await fs.writeFile(path.join(tempImageDir, `${interactionId}_canvas1.png`), 'data1');
+        await fs.writeFile(path.join(tempImageDir, `${interactionId}_canvas2.png`), 'data2');
+        await fs.writeFile(path.join(tempImageDir, `${interactionId}_canvas3.png`), 'data3');
         await fs.writeFile(path.join(tempImageDir, 'other_file.png'), 'other');
 
         // Make file2 read-only to simulate deletion failure
-        const file2Path = path.join(tempImageDir, `${interactionId}_file2.png`);
+        const file2Path = path.join(tempImageDir, `${interactionId}_canvas2.png`);
         await fs.chmod(file2Path, 0o444);
 
         // Cleanup should not throw, but log error for file2
@@ -251,7 +251,7 @@ describe('imageCleanup', () => {
 
         // Verify other files were deleted
         const remaining = await fs.readdir(tempImageDir);
-        assert.ok(!remaining.includes(`${interactionId}_file1.png`), 'file1 should be deleted');
+        assert.ok(!remaining.includes(`${interactionId}_canvas1.png`), 'file1 should be deleted');
         assert.ok(remaining.includes('other_file.png'), 'other file should remain');
         // file2 might or might not remain depending on platform/permissions
     });

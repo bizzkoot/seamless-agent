@@ -1,4 +1,13 @@
 {
+  "detail.renderUI": "Superfície de UI",
+  "detail.renderUISurfaceId": "ID da Superfície",
+  "detail.renderUIComponents": "Componentes",
+  "detail.renderUIUserAction": "Ação do usuário",
+  "detail.renderUIDismissed": "Descartado",
+  "history.filter.renderUI": "Superfície de UI",
+  "console.diagnostics": "Diagnósticos",
+  "console.diagnosticsDescription": "Ver logs da extensão e diagnosticar problemas com a contagem de badges.",
+  "command.showLogs.title": "Mostrar Logs da Extensão",
   "notification.confirmationRequired": "Confirmação Necessária",
   "notification.agentRequiresInput": "O agente precisa da sua entrada",
   "notification.openConsole": "Abrir Console",

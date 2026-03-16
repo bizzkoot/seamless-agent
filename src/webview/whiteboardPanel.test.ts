@@ -319,12 +319,13 @@ describe('WhiteboardPanel', () => {
     const modulePath = req.resolve('./whiteboardPanel.ts');
     let originalLoad: typeof Module._load;
     let tempRoot: string;
-    const extensionUri = { fsPath: '/Users/muhammadfaiz/Custom APP/seamless_agent' } as any;
+    let extensionUri: any;
 
     beforeEach(() => {
         originalLoad = Module._load;
         delete req.cache[modulePath];
         tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'whiteboard-panel-test-'));
+        extensionUri = { fsPath: tempRoot };
     });
 
     afterEach(() => {
@@ -335,37 +336,7 @@ describe('WhiteboardPanel', () => {
 
     it('keeps the pending resolver alive when the user manually closes the panel', async () => {
         const mock = createMockVscode();
-        Module._load = function patchedLoad(request: string, parent: unknown, isMain: boolean) {
-            if (request === 'vscode') {
-                return mock.mockVscode;
-            }
-            if (request === '../storage/chatHistoryStorage' || request === './chatHistoryStorage' || request.endsWith('/chatHistoryStorage')) {
-                return {
-                    getChatHistoryStorage: () => ({
-                        updateWhiteboardInteraction() { },
-                    }),
-                    getExtensionContext: () => ({
-                        globalStorageUri: { fsPath: tempRoot },
-                    }),
-                };
-            }
-            if (request === '../logging' || request === './logging' || request.endsWith('/logging')) {
-                return {
-                    Logger: {
-                        debug() { },
-                        info() { },
-                        warn() { },
-                        error() { },
-                    },
-                };
-            }
-            if (request === '../whiteboard/imageCleanup' || request.endsWith('/imageCleanup')) {
-                return {
-                    cleanupWhiteboardTempImages: async () => { },
-                };
-            }
-            return originalLoad.call(this, request, parent, isMain);
-        };
+        Module._load = createPatchedLoad(tempRoot, mock, originalLoad);
 
         const { WhiteboardPanel } = req('./whiteboardPanel.ts') as typeof import('./whiteboardPanel');
         const interactionId = 'wb_manual_close';

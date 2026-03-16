@@ -2275,7 +2275,7 @@ function bootstrap(): void {
             event.target.__annotationPrevTop = event.target.top;
         }
 
-        const pointer = fabricCanvas.getPointer(event.e) as WhiteboardPoint;
+        const pointer = (fabricCanvas as any).getPointer(event.e) as WhiteboardPoint;
         if (currentTool === 'eraser') {
             isErasing = true;
             hasErasedObjects = eraseObjectsAtPoint(fabricCanvas, pointer) || hasErasedObjects;
@@ -2317,7 +2317,7 @@ function bootstrap(): void {
 
     fabricCanvas.on('mouse:move', (event: any) => {
         if (currentTool === 'eraser' && isErasing && event.e) {
-            hasErasedObjects = eraseObjectsAtPoint(fabricCanvas, fabricCanvas.getPointer(event.e) as WhiteboardPoint) || hasErasedObjects;
+            hasErasedObjects = eraseObjectsAtPoint(fabricCanvas, (fabricCanvas as any).getPointer(event.e) as WhiteboardPoint) || hasErasedObjects;
             return;
         }
 
@@ -2325,7 +2325,7 @@ function bootstrap(): void {
             return;
         }
 
-        updateShapeDraft(currentShapeDraft, fabricCanvas.getPointer(event.e) as WhiteboardPoint);
+        updateShapeDraft(currentShapeDraft, (fabricCanvas as any).getPointer(event.e) as WhiteboardPoint);
     });
 
     fabricCanvas.on('mouse:up', () => {

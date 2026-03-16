@@ -1,4 +1,14 @@
-import * as vscode from 'vscode';
+// Allow dependency injection for vscode in tests
+let _vscode: typeof import('vscode');
+try {
+    _vscode = require('vscode');
+} catch (e) {
+    // In test environments, _vscode can be injected
+    _vscode = undefined as any;
+}
+
+import type { ExtensionContext, Memento, Uri } from 'vscode';
+
 import {
     isCompletedStoredInteraction,
     isPendingStoredInteraction,
@@ -53,18 +63,24 @@ export class StorageQuotaExceededError extends Error {
  * Simplified: each interaction is individual, no chat grouping
  */
 export class ChatHistoryStorage {
-    private context: vscode.ExtensionContext;
-    private config: vscode.WorkspaceConfiguration;
+    private context: ExtensionContext | any; // _vscode.ExtensionContext or mock
+    private config: any; // _vscode.WorkspaceConfiguration or mock
     private readonly options: Required<ChatHistoryStorageOptions>;
 
-    constructor(context: vscode.ExtensionContext, options: ChatHistoryStorageOptions = {}) {
+    constructor(context: any, options: ChatHistoryStorageOptions = {}, vscodeOverride?: any) {
+        // Allow injection of mock vscode for tests
+        const vscodeObj = vscodeOverride || _vscode;
         this.context = context;
-        this.config = vscode.workspace.getConfiguration('seamless-agent');
+        this.config = vscodeObj?.workspace?.getConfiguration ? vscodeObj.workspace.getConfiguration('seamlessAgent') : {};
+        const defaultOptions: Required<ChatHistoryStorageOptions> = {
+            now: () => Date.now(),
+            whiteboardSessionMaxAgeMs: DEFAULT_WHITEBOARD_SESSION_MAX_AGE_MS,
+            maxStorageBytes: DEFAULT_STORAGE_QUOTA_BYTES,
+            quotaCleanupThreshold: DEFAULT_STORAGE_QUOTA_THRESHOLD,
+        };
         this.options = {
-            now: options.now ?? (() => Date.now()),
-            whiteboardSessionMaxAgeMs: options.whiteboardSessionMaxAgeMs ?? DEFAULT_WHITEBOARD_SESSION_MAX_AGE_MS,
-            maxStorageBytes: options.maxStorageBytes ?? DEFAULT_STORAGE_QUOTA_BYTES,
-            quotaCleanupThreshold: options.quotaCleanupThreshold ?? DEFAULT_STORAGE_QUOTA_THRESHOLD,
+            ...defaultOptions,
+            ...options,
         };
     }
 
@@ -73,7 +89,7 @@ export class ChatHistoryStorage {
     // ========================
 
 
-    get storage(): vscode.Memento {
+    get storage(): Memento {
         if (getStorageContext() === 'workspace') {
             return this.context.workspaceState;
         }
@@ -81,7 +97,7 @@ export class ChatHistoryStorage {
     }
 
     /**
-     * Get all interactions, sorted by timestamp (most recent first)
+                const interactions = [...(this.storage.get(STORAGE_KEYS.INTERACTIONS, []) as StoredInteraction[])];
      */
     getAllInteractions(): StoredInteraction[] {
         const interactions = [...this.storage.get<StoredInteraction[]>(STORAGE_KEYS.INTERACTIONS, [])];
@@ -98,7 +114,7 @@ export class ChatHistoryStorage {
 
     /**
      * Get a pending interaction by ID
-     * Only returns if the interaction is still pending
+                await this.storage.update(STORAGE_KEYS.INTERACTIONS, await this.prepareInteractionsForStorage(interactions));
      **/
     getPendingInteraction(interactionId: string): StoredInteraction | undefined {
         const interaction = this.getInteraction(interactionId);
@@ -254,7 +270,7 @@ export class ChatHistoryStorage {
             interactions.push(interaction);
         }
 
-        this.storage.update(STORAGE_KEYS.INTERACTIONS, await this.prepareInteractionsForStorage(interactions));
+        return await this.storage.update(STORAGE_KEYS.INTERACTIONS, await this.prepareInteractionsForStorage(interactions));
     }
 
     /**
@@ -320,8 +336,8 @@ export class ChatHistoryStorage {
     /**
      * Update the stored whiteboard session for a whiteboard interaction.
      */
-    updateWhiteboardSession(interactionId: string, updates: Partial<WhiteboardSession>): void {
-        this.updateWhiteboardInteraction(interactionId, {
+    async updateWhiteboardSession(interactionId: string, updates: Partial<WhiteboardSession>): Promise<void> {
+        return this.updateWhiteboardInteraction(interactionId, {
             whiteboardSession: updates,
         });
     }
@@ -334,7 +350,7 @@ export class ChatHistoryStorage {
         const cleanedInteractions = await this.pruneOldWhiteboardSessions(interactions);
 
         if (cleanedInteractions.length !== interactions.length) {
-            this.storage.update(STORAGE_KEYS.INTERACTIONS, cleanedInteractions);
+            await this.storage.update(STORAGE_KEYS.INTERACTIONS, cleanedInteractions);
         }
     }
 
@@ -436,26 +452,27 @@ export class ChatHistoryStorage {
         }
 
         // Determine file path
+        const vscodeObj = _vscode;
         if (!targetPath) {
-            const workspaceFolders = vscode.workspace.workspaceFolders;
+            const workspaceFolders = vscodeObj?.workspace?.workspaceFolders;
             if (!workspaceFolders || workspaceFolders.length === 0) {
-                vscode.window.showErrorMessage('No workspace folder open');
+                vscodeObj?.window?.showErrorMessage('No workspace folder open');
                 return undefined;
             }
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const fileName = `plan-review-${timestamp}.md`;
-            targetPath = vscode.Uri.joinPath(workspaceFolders[0].uri, fileName).fsPath;
+            targetPath = vscodeObj?.Uri?.joinPath(workspaceFolders[0].uri, fileName).fsPath;
         }
 
         // Write file
         try {
-            const uri = vscode.Uri.file(targetPath);
-            await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
-            vscode.window.showInformationMessage(`Plan exported to ${targetPath}`);
+            const uri = vscodeObj?.Uri?.file(targetPath);
+            await vscodeObj?.workspace?.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
+            vscodeObj?.window?.showInformationMessage(`Plan exported to ${targetPath}`);
             return targetPath;
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to export plan: ${error}`);
+            vscodeObj?.window?.showErrorMessage(`Failed to export plan: ${error}`);
             return undefined;
         }
     }
@@ -560,7 +577,12 @@ export class ChatHistoryStorage {
             return true;
         }
 
-        if (session.status === 'approved' || session.status === 'recreateWithChanges' || session.status === 'cancelled') {
+        if (
+            session.status === 'approved' ||
+            session.status === 'recreateWithChanges' ||
+            session.status === 'cancelled' ||
+            session.status === 'submitted'
+        ) {
             return false;
         }
 
@@ -572,18 +594,18 @@ export class ChatHistoryStorage {
     }
 
     private getSerializedSize(interactions: StoredInteraction[]): number {
-        return JSON.stringify(interactions).length;
+        return Buffer.byteLength(JSON.stringify(interactions), 'utf8');
     }
 }
 
 // Singleton instance
 let storageInstance: ChatHistoryStorage | undefined;
-let extensionContextInstance: vscode.ExtensionContext | undefined;
+let extensionContextInstance: ExtensionContext | undefined;
 
 /**
  * Initialize the storage with extension context
  */
-export function initializeChatHistoryStorage(context: vscode.ExtensionContext): ChatHistoryStorage {
+export function initializeChatHistoryStorage(context: ExtensionContext): ChatHistoryStorage {
     extensionContextInstance = context;
     storageInstance = new ChatHistoryStorage(context);
     return storageInstance;
@@ -599,7 +621,7 @@ export function getChatHistoryStorage(): ChatHistoryStorage {
     return storageInstance;
 }
 
-export function getExtensionContext(): vscode.ExtensionContext {
+export function getExtensionContext(): ExtensionContext {
     if (!extensionContextInstance) {
         throw new Error('Extension context not initialized. Call initializeChatHistoryStorage first.');
     }

@@ -136,6 +136,7 @@ declare global {
             pending: string;
             acknowledged: string;
             cancelled: string;
+            closed: string;
             question: string;
             response: string;
             noResponse: string;
@@ -2312,8 +2313,10 @@ function applyAskUserOptionsTooltipMode(): void {
     function getStatusLabel(status?: string): string {
         switch (status) {
             case 'approved': return window.__STRINGS__?.approved || 'Approved';
+            case 'submitted': return window.__STRINGS__?.submitted || 'Submitted';
             case 'recreateWithChanges': return 'Request changes';
             case 'acknowledged': return window.__STRINGS__?.acknowledged || 'Acknowledged';
+            case 'closed': return window.__STRINGS__?.closed || 'Closed';
             case 'pending': return window.__STRINGS__?.pending || 'Pending';
             case 'cancelled': return window.__STRINGS__?.cancelled || 'Cancelled';
             default: return window.__STRINGS__?.pending || 'Pending';
@@ -3514,7 +3517,8 @@ function applyAskUserOptionsTooltipMode(): void {
                 break;
             case 'updatePendingCount': updatePendingCountBadge(message.count, message.requestOrder);
                 break;
-            case 'showHome': recentInteractions = message.recentInteractions || [];
+            case 'showHome': {
+                recentInteractions = message.recentInteractions || [];
                 showHome();
 
                 // Update pending requests if provided
@@ -3539,6 +3543,7 @@ function applyAskUserOptionsTooltipMode(): void {
                 }
 
                 break;
+            }
             case 'showInteractionDetail': showInteractionDetail(message.interaction);
                 break;
 

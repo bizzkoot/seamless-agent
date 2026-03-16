@@ -77,18 +77,32 @@ function parseArgs() {
 async function callExtensionApi(state, endpoint, data) {
     async function attempt(port, token) {
         const url = `http://localhost:${port}${endpoint}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const controller = new AbortController();
+        const timeoutMs = 30000; // 30 seconds
+        let timer;
+        try {
+            timer = setTimeout(() => controller.abort(), timeoutMs);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+                signal: controller.signal,
+            });
+            clearTimeout(timer);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            clearTimeout(timer);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timed out (AbortController)');
+            }
+            throw error;
         }
-        return await response.json();
     }
 
     // Re-read registry on every call to route to the most-recently-focused IDE window

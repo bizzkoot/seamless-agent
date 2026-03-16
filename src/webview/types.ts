@@ -68,7 +68,7 @@ export type WhiteboardCanvasSubmission = NormalizedWhiteboardCanvasSubmission | 
 
 export type WhiteboardReviewAction = 'approved' | 'recreateWithChanges' | 'cancelled';
 
-export type WhiteboardSessionStatus = 'pending' | WhiteboardReviewAction;
+export type WhiteboardSessionStatus = 'pending' | WhiteboardReviewAction | 'submitted';
 
 export function isLegacyWhiteboardSubmittedCanvas(
     canvas: WhiteboardCanvasSubmission

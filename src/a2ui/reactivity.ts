@@ -20,14 +20,21 @@ const FieldReferenceSchema = z.string().min(1);
 // Leaf (field) predicate schemas
 // ---------------------------------------------------------------------------
 
+const PredicateScalarSchema = z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+]);
+
 const FieldEqualsSchema = z.strictObject({
     field: FieldReferenceSchema,
-    equals: z.unknown(),
+    equals: PredicateScalarSchema,
 });
 
 const FieldNotEqualsSchema = z.strictObject({
     field: FieldReferenceSchema,
-    notEquals: z.unknown(),
+    notEquals: PredicateScalarSchema,
 });
 
 const FieldIsTruthySchema = z.strictObject({

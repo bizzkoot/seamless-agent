@@ -88,6 +88,7 @@ export class McpServerManager {
                         question: z.string().describe("The question or prompt to display to the user for confirmation"),
                         title: z.string().optional().describe("Optional custom title for the confirmation dialog"),
                         agentName: z.string().optional().describe("Your agent name"),
+                        multiSelect: z.boolean().optional().describe("Allow multiple selections when options are provided."),
                         options: z.union([
                             z.array(z.union([
                                 z.string(),
