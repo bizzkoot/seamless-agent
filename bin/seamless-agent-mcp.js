@@ -116,7 +116,13 @@ async function callExtensionApi(state, endpoint, data) {
         return await attempt(state.port, state.token);
     } catch (error) {
         // If the extension was restarted with a new port, recover from the registry and retry once
-        if (error.cause && error.cause.code === 'ECONNREFUSED') {
+        const isConnectionRefused =
+            error.code === 'ECONNREFUSED' ||
+            error.cause?.code === 'ECONNREFUSED' ||
+            (error.message && error.message.includes('ECONNREFUSED')) ||
+            (error.message && error.message.includes('connect ECONNREFUSED'));
+
+        if (isConnectionRefused) {
             const fresh = readBestInstance();
             if (fresh && (fresh.port !== state.port || fresh.token !== state.token)) {
                 state.port = fresh.port;
@@ -329,7 +335,7 @@ async function main() {
                 components: z.array(z.object({
                     id: z.string(),
                     component: z.object({
-                        type: z.enum(['Row', 'Column', 'Card', 'Divider', 'Text', 'Heading', 'Image', 'Markdown', 'CodeBlock', 'Button', 'TextField', 'Checkbox', 'Select']),
+                        type: z.enum(['Row', 'Column', 'Card', 'Divider', 'Text', 'Heading', 'Image', 'Markdown', 'CodeBlock', 'Button', 'TextField', 'Checkbox', 'Select', 'MermaidDiagram', 'ProgressBar', 'Badge', 'BarChart', 'LineChart', 'PieChart']),
                         props: z.record(z.any()).optional(),
                     }),
                 })).optional(),
@@ -388,7 +394,7 @@ async function main() {
                 components: z.array(z.object({
                     id: z.string(),
                     component: z.object({
-                        type: z.enum(['Row', 'Column', 'Card', 'Divider', 'Text', 'Heading', 'Image', 'Markdown', 'CodeBlock', 'Button', 'TextField', 'Checkbox', 'Select']),
+                        type: z.enum(['Row', 'Column', 'Card', 'Divider', 'Text', 'Heading', 'Image', 'Markdown', 'CodeBlock', 'Button', 'TextField', 'Checkbox', 'Select', 'MermaidDiagram', 'ProgressBar', 'Badge', 'BarChart', 'LineChart', 'PieChart']),
                         props: z.record(z.any()).optional(),
                     }),
                 })).describe('Non-empty list of components to append'),

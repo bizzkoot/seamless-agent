@@ -56,6 +56,11 @@ describe('planReview edge cases and dependency mocks', () => {
             // Delegate all other requests to originalLoad to avoid recursion
             return originalLoad(request, parent, isMain);
         };
+
+        // Clear require cache to ensure mocks are applied
+        const planReviewPath = require.resolve('./planReview.ts');
+        delete require.cache[planReviewPath];
+
         planReview = localRequire('./planReview.ts').planReview;
     });
 

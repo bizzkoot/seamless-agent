@@ -2198,7 +2198,14 @@ function applyAskUserOptionsTooltipMode(): void {
                 const userAction = session?.userAction;
                 const wasDismissed = session?.dismissed ?? false;
 
-                appendChildren(interactionDetailView!,
+                const detailContent = interactionDetailView.querySelector('.interaction-detail-content') || interactionDetailView;
+
+                // Clear existing content and replace
+                while (detailContent.firstChild) {
+                    detailContent.removeChild(detailContent.firstChild);
+                }
+
+                appendChildren(detailContent,
                     el('div', { className: 'detail-section detail-section-plain' },
                         el('div', { className: 'detail-label' },
                             codicon('window'),
@@ -2314,7 +2321,7 @@ function applyAskUserOptionsTooltipMode(): void {
         switch (status) {
             case 'approved': return window.__STRINGS__?.approved || 'Approved';
             case 'submitted': return window.__STRINGS__?.submitted || 'Submitted';
-            case 'recreateWithChanges': return 'Request changes';
+            case 'recreateWithChanges': return (window.__STRINGS__ as any)?.['approvePlan.button.reject'] || 'Request changes';
             case 'acknowledged': return window.__STRINGS__?.acknowledged || 'Acknowledged';
             case 'closed': return window.__STRINGS__?.closed || 'Closed';
             case 'pending': return window.__STRINGS__?.pending || 'Pending';

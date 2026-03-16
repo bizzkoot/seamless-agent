@@ -6,7 +6,7 @@
  * for consumption by the webview runtime (implemented in the next slice).
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * Predicate field references are exact lookups against the browser-side form state map,

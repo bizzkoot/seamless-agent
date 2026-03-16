@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { createRequire } from 'node:module';
 
 import { RenderUIInputSchema, WhiteboardInputSchema, UpdateUIInputSchema, AppendUIInputSchema, CloseUIInputSchema } from '../tools/schemas';

@@ -2,9 +2,8 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
-const nodeRequire = createRequire(__filename);
 const localRequire = createRequire(__filename);
-const Module = nodeRequire('node:module') as typeof import('node:module') & {
+const Module = localRequire('node:module') as typeof import('node:module') & {
     _load: (request: string, parent: unknown, isMain: boolean) => unknown;
 };
 

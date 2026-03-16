@@ -6,7 +6,7 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { AgentInteractionProvider } from '../webview/webviewProvider';
 import { askUser, openWhiteboard, planReviewApproval, walkthroughReview, renderUI, updateUI, appendUI, closeUI, listSurfaces } from '../tools';
 import { parseWhiteboardInput, parseRenderUIInput, parseUpdateUIInput, parseAppendUIInput, parseCloseUIInput, parseListSurfacesInput, WhiteboardInputSchema, RenderUIInputSchema, UpdateUIInputSchema, AppendUIInputSchema, CloseUIInputSchema, ListSurfacesInputSchema } from '../tools/schemas';

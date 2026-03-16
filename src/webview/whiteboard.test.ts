@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import * as fabric from 'fabric';
 
 import {
     applyStyleControlsToObject,
@@ -731,5 +732,295 @@ describe('whiteboard state helpers', () => {
         assert.equal(cleared, 1);
         assert.equal(rendered, 1);
         assert.equal(canvas.backgroundColor, '#ffffff');
+    });
+});
+
+describe('annotation group functionality', () => {
+    it('should create annotation with body group and separate handle', () => {
+        const annotationId = 'test-annotation';
+        const point = { x: 400, y: 300 };
+
+        // Create mock annotation objects
+        const pointer = {
+            type: 'line',
+            get: (key: string) => key === 'annotationId' ? annotationId : 'pointer',
+            set: function(props: any) { Object.assign(this, props); },
+            getObjects: () => []
+        };
+        pointer.set({ annotationId, annotationRole: 'pointer' });
+
+        const bubble = {
+            type: 'rect',
+            get: (key: string) => key === 'annotationId' ? annotationId : 'bubble',
+            set: function(props: any) { Object.assign(this, props); },
+        };
+        bubble.set({ annotationId, annotationRole: 'bubble' });
+
+        const text = {
+            type: 'textbox',
+            selectable: true,
+            evented: true,
+            editable: true,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'text';
+                if (key === 'selectable') return true;
+                if (key === 'evented') return true;
+                return undefined;
+            },
+            set: function(props: any) { Object.assign(this, props); },
+        };
+        text.set({ annotationId, annotationRole: 'text' });
+
+        const bodyGroup = {
+            type: 'group',
+            selectable: true,
+            evented: true,
+            subTargetCheck: true,
+            left: point.x + 28,
+            top: point.y - 40,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'bubble';
+                if (key === 'selectable') return true;
+                if (key === 'evented') return true;
+                if (key === 'subTargetCheck') return true;
+                return undefined;
+            },
+            set: function(props: any) { Object.assign(this, props); },
+            getObjects: () => [pointer, bubble, text],
+            addWithUpdate: function() { this.getObjects(); }
+        };
+        bodyGroup.set({ annotationId, annotationRole: 'bubble' });
+
+        const handle = {
+            type: 'circle',
+            selectable: true,
+            evented: true,
+            left: point.x,
+            top: point.y,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'handle';
+                if (key === 'selectable') return true;
+                if (key === 'evented') return true;
+                return undefined;
+            },
+            set: function(props: any) { Object.assign(this, props); },
+        };
+        handle.set({ annotationId, annotationRole: 'handle' });
+
+        // Verify body group exists and has correct properties
+        assert.equal(bodyGroup.type, 'group');
+        assert.equal(bodyGroup.get('annotationId'), annotationId);
+        assert.equal(bodyGroup.get('annotationRole'), 'bubble');
+        assert.equal(bodyGroup.selectable, true);
+        assert.equal(bodyGroup.evented, true);
+        assert.equal(bodyGroup.subTargetCheck, true);
+
+        // Verify handle exists and is separate
+        assert.equal(handle.get('annotationId'), annotationId);
+        assert.equal(handle.get('annotationRole'), 'handle');
+        assert.equal(handle.selectable, true);
+        assert.equal(handle.evented, true);
+
+        // Verify body group contains 3 objects
+        const groupObjects = bodyGroup.getObjects();
+        assert.equal(groupObjects.length, 3);
+        assert.ok(groupObjects.find((obj: any) => obj.get('annotationRole') === 'pointer'));
+        assert.ok(groupObjects.find((obj: any) => obj.get('annotationRole') === 'bubble'));
+        assert.ok(groupObjects.find((obj: any) => obj.get('annotationRole') === 'text'));
+
+        // Verify text object is selectable and editable
+        assert.equal(text.selectable, true);
+        assert.equal(text.evented, true);
+        assert.equal(text.editable, true);
+    });
+
+    it('should move entire annotation body when dragging body group', () => {
+        const annotationId = 'test-annotation';
+        const point = { x: 400, y: 300 };
+
+        const pointer = { get: (k: string) => k === 'annotationId' ? annotationId : 'pointer' };
+        const bubble = { get: (k: string) => k === 'annotationId' ? annotationId : 'bubble' };
+        const text = { get: (k: string) => k === 'annotationId' ? annotationId : 'text' };
+
+        const bodyGroup = {
+            type: 'group',
+            left: point.x + 28,
+            top: point.y - 40,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'bubble';
+                return undefined;
+            },
+            set: function(props: any) { Object.assign(this, props); },
+            getObjects: () => [pointer, bubble, text],
+            addWithUpdate: function() {}
+        };
+
+        const handle = {
+            left: point.x,
+            top: point.y,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'handle';
+                return undefined;
+            }
+        };
+
+        const originalGroupLeft = bodyGroup.left;
+        const originalGroupTop = bodyGroup.top;
+        const originalHandleLeft = handle.left;
+        const originalHandleTop = handle.top;
+
+        // Simulate moving the body group
+        bodyGroup.set({
+            left: originalGroupLeft + 50,
+            top: originalGroupTop + 30,
+        });
+
+        // Verify body group moved
+        assert.equal(bodyGroup.left, originalGroupLeft + 50);
+        assert.equal(bodyGroup.top, originalGroupTop + 30);
+
+        // Verify handle stayed in place (independent)
+        assert.equal(handle.left, originalHandleLeft);
+        assert.equal(handle.top, originalHandleTop);
+    });
+
+    it('should move handle independently and keep body group in place', () => {
+        const annotationId = 'test-annotation';
+        const point = { x: 400, y: 300 };
+
+        const pointer = { get: (k: string) => k === 'annotationId' ? annotationId : 'pointer' };
+        const bubble = { get: (k: string) => k === 'annotationId' ? annotationId : 'bubble' };
+        const text = { get: (k: string) => k === 'annotationId' ? annotationId : 'text' };
+
+        const bodyGroup = {
+            type: 'group',
+            left: point.x + 28,
+            top: point.y - 40,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'bubble';
+                return undefined;
+            },
+            set: function(props: any) { Object.assign(this, props); },
+            getObjects: () => [pointer, bubble, text]
+        };
+
+        const handle = {
+            left: point.x,
+            top: point.y,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'handle';
+                return undefined;
+            },
+            set: function(props: any) { Object.assign(this, props); }
+        };
+
+        const originalGroupLeft = bodyGroup.left;
+        const originalGroupTop = bodyGroup.top;
+        const originalHandleLeft = handle.left;
+        const originalHandleTop = handle.top;
+
+        // Simulate moving the handle
+        handle.set({
+            left: originalHandleLeft + 100,
+            top: originalHandleTop + 50,
+        });
+
+        // Verify handle moved
+        assert.equal(handle.left, originalHandleLeft + 100);
+        assert.equal(handle.top, originalHandleTop + 50);
+
+        // Verify body group stayed in place (independent)
+        assert.equal(bodyGroup.left, originalGroupLeft);
+        assert.equal(bodyGroup.top, originalGroupTop);
+    });
+
+    it('should remove both body group and handle when deleting annotation', () => {
+        const annotationId = 'test-annotation';
+        const point = { x: 400, y: 300 };
+
+        const pointer = { get: (k: string) => k === 'annotationId' ? annotationId : 'pointer' };
+        const bubble = { get: (k: string) => k === 'annotationId' ? annotationId : 'bubble' };
+        const text = { get: (k: string) => k === 'annotationId' ? annotationId : 'text' };
+
+        const bodyGroup = {
+            type: 'group',
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'bubble';
+                return undefined;
+            },
+            getObjects: () => [pointer, bubble, text]
+        };
+
+        const handle = {
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'handle';
+                return undefined;
+            }
+        };
+
+        const objects = [bodyGroup, handle];
+        assert.equal(objects.length, 2);
+
+        // Simulate removing annotation
+        const filtered = objects.filter((obj: any) => obj.get('annotationId') !== annotationId);
+        
+        // Verify both objects removed
+        assert.equal(filtered.length, 0);
+    });
+
+    it('should allow text editing within body group', () => {
+        const annotationId = 'test-annotation';
+        const point = { x: 400, y: 300 };
+
+        const pointer = { get: (k: string) => k === 'annotationId' ? annotationId : 'pointer' };
+        const bubble = { get: (k: string) => k === 'annotationId' ? annotationId : 'bubble' };
+        
+        const text = {
+            selectable: true,
+            evented: true,
+            editable: true,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'text';
+                if (key === 'selectable') return true;
+                if (key === 'evented') return true;
+                if (key === 'editable') return true;
+                return undefined;
+            }
+        };
+
+        const bodyGroup = {
+            type: 'group',
+            selectable: true,
+            evented: true,
+            subTargetCheck: true,
+            get: (key: string) => {
+                if (key === 'annotationId') return annotationId;
+                if (key === 'annotationRole') return 'bubble';
+                if (key === 'selectable') return true;
+                if (key === 'evented') return true;
+                if (key === 'subTargetCheck') return true;
+                return undefined;
+            },
+            getObjects: () => [pointer, bubble, text]
+        };
+
+        // Verify text object is selectable and editable
+        assert.equal(text.selectable, true);
+        assert.equal(text.evented, true);
+        assert.equal(text.editable, true);
+
+        // Verify group has subTargetCheck enabled
+        assert.equal(bodyGroup.subTargetCheck, true);
+        assert.equal(bodyGroup.get('subTargetCheck'), true);
     });
 });

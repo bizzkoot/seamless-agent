@@ -1218,22 +1218,39 @@ function shouldObjectBeSelectable(tool: WhiteboardTool, object: any): boolean {
         return true;
     }
 
-    return role === 'text' || role === 'handle';
+    return role === 'text' || role === 'handle' || role === 'bubble';
 }
 
 function getAnnotationObjects(canvas: any, annotationId: string): {
+    bodyGroup?: any;
     bubble?: any;
     text?: any;
     pointer?: any;
     handle?: any;
 } {
     const objects = canvas.getObjects().filter((object: any) => getAnnotationId(object) === annotationId);
-    return {
-        bubble: objects.find((object: any) => getAnnotationRole(object) === 'bubble'),
-        text: objects.find((object: any) => getAnnotationRole(object) === 'text'),
-        pointer: objects.find((object: any) => getAnnotationRole(object) === 'pointer'),
-        handle: objects.find((object: any) => getAnnotationRole(object) === 'handle'),
-    };
+    const bodyGroup = objects.find((object: any) => object?.type === 'group' && getAnnotationRole(object) === 'bubble');
+    
+    // Extract objects from group if it exists
+    let bubble: any | undefined;
+    let text: any | undefined;
+    let pointer: any | undefined;
+    
+    if (bodyGroup && typeof bodyGroup.getObjects === 'function') {
+        const groupObjects = bodyGroup.getObjects();
+        bubble = groupObjects.find((obj: any) => getAnnotationRole(obj) === 'bubble');
+        text = groupObjects.find((obj: any) => getAnnotationRole(obj) === 'text');
+        pointer = groupObjects.find((obj: any) => getAnnotationRole(obj) === 'pointer');
+    } else {
+        // Fallback for non-grouped annotations (backward compatibility)
+        bubble = objects.find((object: any) => getAnnotationRole(object) === 'bubble');
+        text = objects.find((object: any) => getAnnotationRole(object) === 'text');
+        pointer = objects.find((object: any) => getAnnotationRole(object) === 'pointer');
+    }
+    
+    const handle = objects.find((object: any) => getAnnotationRole(object) === 'handle');
+    
+    return { bodyGroup, bubble, text, pointer, handle };
 }
 
 function getAnnotationAnchor(bounds: { left: number; top: number; width: number; height: number }, target: WhiteboardPoint): WhiteboardPoint {
@@ -1258,7 +1275,7 @@ function getAnnotationAnchor(bounds: { left: number; top: number; width: number;
 }
 
 function syncAnnotationLayout(canvas: any, annotationId: string): void {
-    const { bubble, text, pointer, handle } = getAnnotationObjects(canvas, annotationId);
+    const { bodyGroup, bubble, text, pointer, handle } = getAnnotationObjects(canvas, annotationId);
     if (!bubble || !text || !pointer || !handle) {
         return;
     }
@@ -1297,6 +1314,11 @@ function syncAnnotationLayout(canvas: any, annotationId: string): void {
     pointer.setCoords();
     handle.setCoords();
     text.setCoords();
+    
+    // Update group if it exists
+    if (bodyGroup && typeof bodyGroup.addWithUpdate === 'function') {
+        bodyGroup.addWithUpdate();
+    }
 }
 
 function moveAnnotation(canvas: any, annotationId: string, deltaX: number, deltaY: number): void {
@@ -1304,28 +1326,41 @@ function moveAnnotation(canvas: any, annotationId: string, deltaX: number, delta
         return;
     }
 
-    const { handle } = getAnnotationObjects(canvas, annotationId);
-    if (!handle) {
-        return;
+    const { bodyGroup } = getAnnotationObjects(canvas, annotationId);
+    if (bodyGroup) {
+        // Move the entire body group
+        const newLeft = (typeof bodyGroup.left === 'number' ? bodyGroup.left : 0) + deltaX;
+        const newTop = (typeof bodyGroup.top === 'number' ? bodyGroup.top : 0) + deltaY;
+        bodyGroup.set({
+            left: newLeft,
+            top: newTop,
+        });
+        bodyGroup.setCoords();
+        // Resync pointer to handle's current position
+        syncAnnotationLayout(canvas, annotationId);
     }
-
-    handle.set({
-        left: (typeof handle.left === 'number' ? handle.left : 0) + deltaX,
-        top: (typeof handle.top === 'number' ? handle.top : 0) + deltaY,
-    });
-    syncAnnotationLayout(canvas, annotationId);
 }
 
 function removeAnnotation(canvas: any, annotationId: string): boolean {
-    const annotationObjects = canvas.getObjects().filter((object: any) => getAnnotationId(object) === annotationId);
-    if (annotationObjects.length === 0) {
-        return false;
+    const { bodyGroup, handle } = getAnnotationObjects(canvas, annotationId);
+    let removed = false;
+    
+    if (bodyGroup) {
+        canvas.remove(bodyGroup);
+        removed = true;
     }
-
-    annotationObjects.forEach((object: any) => canvas.remove(object));
-    canvas.discardActiveObject();
-    canvas.requestRenderAll();
-    return true;
+    
+    if (handle) {
+        canvas.remove(handle);
+        removed = true;
+    }
+    
+    if (removed) {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+    }
+    
+    return removed;
 }
 
 function attachTextPersistence(object: any, persist: () => Promise<void>): void {
@@ -1862,12 +1897,20 @@ function bootstrap(): void {
             fontFamily: 'sans-serif',
             fill: bubbleStroke,
             editable: true,
-            selectable: false,
-            evented: false,
+            selectable: true,
+            evented: true,
         }), { objectType: 'annotation' });
         text.set({ annotationId, annotationRole: 'text' as AnnotationRole });
         attachTextPersistence(text, () => persistActiveCanvas());
         attachAnnotationTextSync(text, fabricCanvas);
+
+        // Create body group containing pointer, bubble, and text
+        const bodyGroup = new fabric.Group([pointer, bubble, text], {
+            selectable: true,
+            evented: true,
+            subTargetCheck: true, // Allow selecting sub-objects (e.g., text for editing)
+        });
+        bodyGroup.set({ annotationId, annotationRole: 'bubble' as AnnotationRole });
 
         const handle = decorateFabricObject(new fabric.Circle({
             left: point.x,
@@ -1878,16 +1921,17 @@ function bootstrap(): void {
             fill: bubbleStroke,
             stroke: '#ffffff',
             strokeWidth: 2,
-            selectable: false,
-            evented: false,
+            selectable: true,
+            evented: true,
         }), { objectType: 'annotationHandle' });
         handle.set({ annotationId, annotationRole: 'handle' as AnnotationRole });
 
-        fabricCanvas.add(pointer);
-        fabricCanvas.add(bubble);
-        fabricCanvas.add(text);
+        // Add body group and handle to canvas
+        fabricCanvas.add(bodyGroup);
         fabricCanvas.add(handle);
         syncAnnotationLayout(fabricCanvas, annotationId);
+        
+        // Set text as active for editing
         fabricCanvas.setActiveObject(text);
         text.enterEditing();
         fabricCanvas.requestRenderAll();
@@ -2235,10 +2279,30 @@ function bootstrap(): void {
         const target = event.target;
         const annotationId = getAnnotationId(target);
         const annotationRole = getAnnotationRole(target);
-        if (!annotationId || !annotationRole) {
+        if (!annotationId) {
             return;
         }
 
+        // Handle body group movement (moves entire annotation body)
+        if (annotationRole === 'bubble' && target?.type === 'group') {
+            const previousLeft = typeof target.__annotationPrevLeft === 'number' ? target.__annotationPrevLeft : target.left;
+            const previousTop = typeof target.__annotationPrevTop === 'number' ? target.__annotationPrevTop : target.top;
+            const deltaX = (typeof target.left === 'number' ? target.left : 0) - (typeof previousLeft === 'number' ? previousLeft : 0);
+            const deltaY = (typeof target.top === 'number' ? target.top : 0) - (typeof previousTop === 'number' ? previousTop : 0);
+
+            if (deltaX !== 0 || deltaY !== 0) {
+                moveAnnotation(fabricCanvas, annotationId, deltaX, deltaY);
+            } else {
+                syncAnnotationLayout(fabricCanvas, annotationId);
+            }
+
+            target.__annotationPrevLeft = target.left;
+            target.__annotationPrevTop = target.top;
+            fabricCanvas.requestRenderAll();
+            return;
+        }
+
+        // Handle text movement (legacy support for backward compatibility)
         if (annotationRole === 'text') {
             const previousLeft = typeof target.__annotationPrevLeft === 'number' ? target.__annotationPrevLeft : target.left;
             const previousTop = typeof target.__annotationPrevTop === 'number' ? target.__annotationPrevTop : target.top;
@@ -2257,6 +2321,7 @@ function bootstrap(): void {
             return;
         }
 
+        // Handle handle movement (repositions pointer line)
         if (annotationRole === 'handle') {
             syncAnnotationLayout(fabricCanvas, annotationId);
             target.__annotationPrevLeft = target.left;

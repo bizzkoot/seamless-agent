@@ -146,6 +146,13 @@ export function mergeSubmittedWhiteboardCanvases(
         normalizeWhiteboardSubmittedCanvases(submittedCanvases).map((canvas) => [canvas.id, canvas])
     );
 
+    // Detect unknown submitted canvas IDs to prevent silent data loss
+    const existingCanvasIds = new Set(canvases.map(canvas => canvas.id));
+    const unknownIds = Array.from(normalizedSubmissions.keys()).filter(id => !existingCanvasIds.has(id));
+    if (unknownIds.length > 0) {
+        throw new Error(`Unknown submitted canvas IDs: ${unknownIds.join(', ')}. These IDs do not exist in the canvases array.`);
+    }
+
     return canvases.map((canvas) => {
         const submittedCanvas = normalizedSubmissions.get(canvas.id);
         if (!submittedCanvas) {

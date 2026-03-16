@@ -96,9 +96,6 @@ export class ChatHistoryStorage {
         return this.context.globalState;
     }
 
-    /**
-                const interactions = [...(this.storage.get(STORAGE_KEYS.INTERACTIONS, []) as StoredInteraction[])];
-     */
     getAllInteractions(): StoredInteraction[] {
         const interactions = [...this.storage.get<StoredInteraction[]>(STORAGE_KEYS.INTERACTIONS, [])];
         return interactions.sort((a, b) => b.timestamp - a.timestamp);
@@ -539,7 +536,7 @@ export class ChatHistoryStorage {
             const storageRootPath = storageUri.fsPath;
             const whiteboardInteractions = toRemove.filter(
                 (interaction): interaction is StoredInteraction & { type: 'whiteboard'; id: string } =>
-                    interaction.type === 'whiteboard' && interaction.id !== undefined
+                    interaction.type === 'whiteboard'
             );
 
             // Process cleanups in parallel for better performance
