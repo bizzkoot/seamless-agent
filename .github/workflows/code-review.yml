@@ -3,12 +3,6 @@ name: AI Code Review with Z.ai
 on:
   pull_request:
     types: [opened, synchronize]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'PR number to review (optional, will use current PR context if available)'
-        required: false
-        type: number
 
 permissions:
   pull-requests: write
@@ -19,12 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Code Review
-        uses: tarmojussila/zai-code-review@v0.3.0
+        uses: bizzkoot/zai-code-review@v0.0.2
         with:
           ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
-          # Optional: Override default model (glm-4.7)
+          # Optional - uncomment and set in repo variables if needed
           # ZAI_MODEL: ${{ vars.ZAI_MODEL }}
-          # Optional: Custom system prompt for the AI reviewer
-          # ZAI_SYSTEM_PROMPT: ${{ vars.ZAI_SYSTEM_PROMPT }}
-          # Optional: Reviewer display name
-          # ZAI_REVIEWER_NAME: ${{ vars.ZAI_REVIEWER_NAME }}
+          ZAI_SYSTEM_PROMPT: ${{ vars.ZAI_SYSTEM_PROMPT }}
+          ZAI_REVIEWER_NAME: ${{ vars.ZAI_REVIEWER_NAME }}
