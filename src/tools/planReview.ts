@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PlanReviewPanel } from '../webview/planReviewPanel';
-import type { PlanReviewOptions } from '../webview/types';
+import type { PlanReviewOptions, RequiredPlanRevisions, StoredInteraction } from '../webview/types';
 import { AgentInteractionProvider } from '../webview/webviewProvider';
 import { getChatHistoryStorage } from '../storage/chatHistoryStorage';
 import { PlanReviewInput, PlanReviewToolResult, WalkthroughReviewInput } from './schemas';
@@ -32,7 +32,7 @@ export async function planReview(
     const storage = getChatHistoryStorage();
 
     // Save the interaction as pending (no chatId needed - each interaction is individual)
-    const interactionId = storage.savePlanReviewInteraction({
+    const interactionId = await storage.savePlanReviewInteraction({
         plan,
         title,
         mode,
@@ -45,11 +45,19 @@ export async function planReview(
     // Refresh the webview to show the pending plan in the list
     provider.refreshHome();
 
+    // Helper to safely update interaction status
+    const safeUpdateInteraction = async (patch: Partial<Pick<StoredInteraction, 'status' | 'requiredRevisions'>>) => {
+        try {
+            await storage.updateInteraction(interactionId, patch);
+        } catch (err) {
+            Logger.error('Failed to update interaction state:', err);
+        }
+    };
+
     // Register cancellation handler - if agent stops, mark as cancelled
     const cancellationDisposable = token.onCancellationRequested(() => {
         Logger.log('planReview cancelled by agent, closing:', interactionId);
-
-        storage.updateInteraction(interactionId, { status: 'closed' });
+        void safeUpdateInteraction({ status: 'closed' });
         // Also close the panel if it's open
         PlanReviewPanel.closeIfOpen(interactionId);
         // Refresh webview to remove from pending list
@@ -75,7 +83,7 @@ export async function planReview(
             ? result.action : 'closed';
 
         // Update the stored interaction with the result
-        storage.updateInteraction(interactionId, {
+        await safeUpdateInteraction({
             status: interactionState,
             requiredRevisions: result.requiredRevisions
         });
@@ -102,7 +110,7 @@ export async function planReview(
         Logger.error('Error showing plan review panel:', error);
 
         // Mark as closed on error
-        storage.updateInteraction(interactionId, { status: 'closed' });
+        await safeUpdateInteraction({ status: 'closed' });
         // Refresh webview
         provider.refreshHome();
 
