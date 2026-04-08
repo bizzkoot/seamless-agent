@@ -1,39 +1,7 @@
-import {
-    ActiveSelection,
-    Circle,
-    Ellipse,
-    FabricImage,
-    Group,
-    IText,
-    Line,
-    Path,
-    Polygon,
-    Polyline,
-    Rect,
-    Textbox,
-    Triangle,
-    classRegistry,
-} from 'fabric';
-
-const WHITEBOARD_FABRIC_REGISTRATIONS = [
-    [Rect, 'rect'],
-    [Ellipse, 'ellipse'],
-    [Triangle, 'triangle'],
-    [Line, 'line'],
-    [Path, 'path'],
-    [IText, 'i-text'],
-    [Textbox, 'textbox'],
-    [Circle, 'circle'],
-    [FabricImage, 'image'],
-    [Group, 'group'],
-    [ActiveSelection, 'activeSelection'],
-    [Polygon, 'polygon'],
-    [Polyline, 'polyline'],
-] as const;
-
-export const WHITEBOARD_SUPPORTED_FABRIC_TYPES = new Set<string>(
-    WHITEBOARD_FABRIC_REGISTRATIONS.map(([, type]) => type),
-);
+export const WHITEBOARD_SUPPORTED_FABRIC_TYPES = new Set<string>([
+    'rect', 'ellipse', 'triangle', 'line', 'path', 'i-text',
+    'textbox', 'circle', 'image', 'group', 'activeSelection', 'polygon', 'polyline',
+]);
 
 export function normalizeWhiteboardFabricObjectType(type: string): string {
     const normalized = type.trim();
@@ -70,23 +38,46 @@ export function ensureWhiteboardFabricRegistry(): void {
         return;
     }
 
-    for (const [constructor, type] of WHITEBOARD_FABRIC_REGISTRATIONS) {
-        classRegistry.setClass(constructor, type);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fabric = require('fabric') as {
+        ActiveSelection: unknown; Circle: unknown; Ellipse: unknown; FabricImage: unknown;
+        Group: unknown; IText: unknown; Line: unknown; Path: unknown; Polygon: unknown;
+        Polyline: unknown; Rect: unknown; Textbox: unknown; Triangle: unknown;
+        classRegistry: { setClass(ctor: unknown, type: string): void };
+    };
+
+    const registrations: Array<[unknown, string]> = [
+        [fabric.Rect, 'rect'],
+        [fabric.Ellipse, 'ellipse'],
+        [fabric.Triangle, 'triangle'],
+        [fabric.Line, 'line'],
+        [fabric.Path, 'path'],
+        [fabric.IText, 'i-text'],
+        [fabric.Textbox, 'textbox'],
+        [fabric.Circle, 'circle'],
+        [fabric.FabricImage, 'image'],
+        [fabric.Group, 'group'],
+        [fabric.ActiveSelection, 'activeSelection'],
+        [fabric.Polygon, 'polygon'],
+        [fabric.Polyline, 'polyline'],
+    ];
+
+    for (const [constructor, type] of registrations) {
+        fabric.classRegistry.setClass(constructor, type);
     }
 
     whiteboardFabricRegistryInitialized = true;
 }
 
 export function assertWhiteboardFabricObjectTypeSupported(type: string): void {
-    ensureWhiteboardFabricRegistry();
-
     const normalizedType = normalizeWhiteboardFabricObjectType(type);
 
+    // WHITEBOARD_SUPPORTED_FABRIC_TYPES is the authoritative set of supported Fabric types.
+    // Validating against this set is sufficient; loading fabric here would pull in a
+    // browser-only dependency into the extension-host validation path and break testability.
     if (!WHITEBOARD_SUPPORTED_FABRIC_TYPES.has(normalizedType)) {
         throw new Error(`Canvas fabricState contains unsupported Fabric object type "${type}"`);
     }
-
-    classRegistry.getClass(normalizedType);
 }
 
 export function assertWhiteboardFabricObjectsSupported(objects: unknown[]): void {

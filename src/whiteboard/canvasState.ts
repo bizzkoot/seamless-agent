@@ -1,5 +1,3 @@
-import * as fabric from 'fabric';
-
 export const DEFAULT_WHITEBOARD_CANVAS_WIDTH = 1600;
 export const DEFAULT_WHITEBOARD_CANVAS_HEIGHT = 900;
 export const DEFAULT_WHITEBOARD_CANVAS_BACKGROUND = '#ffffff';
@@ -14,9 +12,18 @@ export interface BlankFabricCanvasState {
     [key: string]: unknown;
 }
 
+function getFabricVersion(): string {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        return (require('fabric') as { version: string }).version;
+    } catch {
+        return 'unknown';
+    }
+}
+
 export function createBlankFabricCanvasState(): BlankFabricCanvasState {
     return {
-        version: fabric.version,
+        version: getFabricVersion(),
         width: DEFAULT_WHITEBOARD_CANVAS_WIDTH,
         height: DEFAULT_WHITEBOARD_CANVAS_HEIGHT,
         backgroundColor: DEFAULT_WHITEBOARD_CANVAS_BACKGROUND,
